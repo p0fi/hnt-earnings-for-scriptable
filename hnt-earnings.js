@@ -6,6 +6,7 @@ const widgets = importModule('hnt-earnings/widgets');
 
 // The hotspot name has to be configured via the widget parameter on the homescreen
 const params = args.widgetParameter != null ? JSON.parse(args.widgetParameter) : { name: '', period: 'day' };
+// Hotspot name has to be given in the format: word-word-word
 const devParams = { name: '', period: 'day' };
 
 if (config.runsInWidget) {
