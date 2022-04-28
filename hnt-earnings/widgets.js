@@ -97,9 +97,11 @@ module.exports.small = async function (params) {
 
   const formattedRate = rate.toLocaleString(conf.LOCALE, { style: 'currency', currency: conf.CURRENCY });
 
-  const rateText = updatedStack.addText(`${formattedRate}/HNT`);
-  rateText.font = Font.systemFont(9);
-  rateText.textColor = colors.textColor;
+  if (conf.CURRENCY != 'HNT') {
+    const rateText = updatedStack.addText(`${formattedRate}/HNT`);
+    rateText.font = Font.systemFont(9);
+    rateText.textColor = colors.textColor;
+  }
 
   updatedStack.addSpacer();
 

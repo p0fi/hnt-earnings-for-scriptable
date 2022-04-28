@@ -4,7 +4,7 @@
 const locale = Device.locale().replace(/_/g, '-');
 
 module.exports = {
-  CURRENCY: 'EUR',
+  CURRENCY: 'EUR', // Possible values: HNT, EUR, USD, JPY, NOK, GBP, RUB, AUD, CAD, MXN
   LOCALE: locale,
 };
 

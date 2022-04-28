@@ -62,6 +62,7 @@ async function fetchAddress(name) {
 }
 
 module.exports.getHeliumPrice = async function () {
+  if (config.CURRENCY == 'HNT') return 1;
   console.log('getting current helium price...');
 
   // Check keychain for price data
@@ -75,7 +76,7 @@ module.exports.getHeliumPrice = async function () {
 
   console.log('checking if its still valid...');
   const data = JSON.parse(Keychain.get('helium_price'));
-  if (Math.floor(Date.now() / 1000) >= data.updatedAt + 14400) {
+  if (data.currency != config.CURRENCY || Math.floor(Date.now() / 1000) >= data.updatedAt + 14400) {
     console.log('existing data is older than 4h...');
     // Request helium price from API
     if (!(await requestHeliumPriceFromAPI())) return;
@@ -90,11 +91,12 @@ async function requestHeliumPriceFromAPI() {
   console.log('requesting current helium price form coingecko...');
   const req = new Request(`https://api.coingecko.com/api/v3/simple/price?ids=helium&vs_currencies=${config.CURRENCY}`);
   const resp = await req.loadJSON();
-  const currentPrice = resp.helium.eur;
+  const currentPrice = resp.helium[config.CURRENCY.toLowerCase()];
 
   const data = {
     price: currentPrice,
     updatedAt: Math.floor(Date.now() / 1000),
+    currency: config.CURRENCY,
   };
 
   Keychain.set('helium_price', JSON.stringify(data));
