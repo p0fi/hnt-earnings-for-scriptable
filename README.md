@@ -13,7 +13,7 @@ Currently the widget is tranlated into:
 * 🇺🇸 English
 
 ### Different Aggregation Periods
-The widget can be configured to display eigther earnings per day, per week or per month 
+The widget can be configured to display eigther earnings per **day**, per **week** or per **month**. 
 
 ### Dark Mode Support
 Supports different color configurations for light ☀️ and dark 🕶️ mode 
