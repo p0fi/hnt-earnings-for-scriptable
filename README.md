@@ -11,6 +11,7 @@ This Scriptable widget lets you display the earnings of your hotspot on the home
 Currently the widget is tranlated into:
 * 🇩🇪 German
 * 🇺🇸 English
+* 🇪🇸 Spanish
 
 ### Different Aggregation Periods
 The widget can be configured to display eigther earnings per **day**, per **week** or per **month**. 
