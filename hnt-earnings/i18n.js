@@ -17,6 +17,19 @@ module.exports.t = function (key, locale) {
           return 'key not found';
       }
       break;
+    case 'es-ES':
+      switch (key) {
+        case 'day':
+          return 'Hoy';
+        case 'week':
+          return 'Esta semana';
+        case 'month':
+          return 'Este mes';
+
+        default:
+          return 'key not found';
+      }
+      break;
     default:
     case 'en-EN':
       switch (key) {
