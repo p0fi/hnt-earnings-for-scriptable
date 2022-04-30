@@ -1,10 +1,10 @@
-# HNT Earnings
+# HNT Earnings Widget for Scriptable
 ![cover](https://github.com/p0fi/hnt-earnings-for-scriptable/blob/main/cover.png)
 
 ## What's this?
-Just got your [Helium](https://www.helium.com) miner? Tired of checking the helium app every other hour during the day to see how much you earned? Want to see earnings right on your home screen? **Look no more!**
+Just got your [Helium](https://www.helium.com) miner? Tired of checking the helium app every other hour during the day to see how much you earned? Want to see earnings right on your iOS home screen? **Look no more!**
 
-This Scriptable widget lets you display the earnings of your hotspot on the home screen to help you keeping track of your daily/weekly/monthly earnings. 
+This [Scriptable](https://scriptable.app) widget lets you display the earnings of your hotspot on the home screen to help you keeping track of your daily/weekly/monthly earnings. 
 
 ## Features
 ### Multi Language Support
