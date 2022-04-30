@@ -1,5 +1,5 @@
 # HNT Earnings
-![cover]()
+![cover]((https://github.com/p0fi/hnt-earnings-for-scriptable/blob/main/cover.png)
 
 ## What's this?
 Just got your [Helium](https://www.helium.com) miner? Tired of checking the helium app every other hour during the day to see how much you earned? Want to see earnings right on your home screen? **Look no more!**
