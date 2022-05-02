@@ -105,9 +105,9 @@ module.exports.small = async function (params) {
 
   updatedStack.addSpacer();
 
-  const updateImg = SFSymbol.named('arrow.clockwise').image;
+  const updateImg = SFSymbol.named('arrow.triangle.2.circlepath').image;
   const updateIcon = updatedStack.addImage(updateImg);
-  updateIcon.imageSize = new Size(9, 9);
+  updateIcon.imageSize = new Size(11, 11);
   updateIcon.tintColor = colors.secondaryText;
 
   updatedStack.addSpacer(2);
