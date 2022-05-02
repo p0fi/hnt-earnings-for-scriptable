@@ -60,13 +60,13 @@ module.exports.small = async function (params) {
   nameStack1.addSpacer();
   const nameText = nameStack1.addText(`${nameComponents[0]} ${nameComponents[1]}`);
   nameText.font = Font.systemFont(12);
-  nameText.textColor = colors.textColor;
+  nameText.textColor = colors.text;
 
   nameStack2.addSpacer();
 
   const mainNameText = nameStack2.addText(`${nameComponents[2]}`);
   mainNameText.font = Font.boldSystemFont(20);
-  mainNameText.textColor = colors.textColor;
+  mainNameText.textColor = colors.text;
 
   w.addSpacer();
 
@@ -80,11 +80,11 @@ module.exports.small = async function (params) {
 
   // Earnings
   const periodText = numberStack.addText(i18n.t(params.period));
-  periodText.font = Font.systemFont(12);
-  periodText.textColor = colors.textColor;
+  periodText.font = Font.boldSystemFont(12);
+  periodText.textColor = colors.secondaryText;
   let earningsText = numberStack.addText(earningsToday);
   earningsText.font = Font.boldSystemFont(32);
-  earningsText.textColor = colors.textColor;
+  earningsText.textColor = colors.text;
   earningsText.minimumScaleFactor = 0.5;
 
   earningsStack.addSpacer();
@@ -100,21 +100,22 @@ module.exports.small = async function (params) {
   if (conf.CURRENCY != 'HNT') {
     const rateText = updatedStack.addText(`${formattedRate}/HNT`);
     rateText.font = Font.systemFont(9);
-    rateText.textColor = colors.textColor;
+    rateText.textColor = colors.secondaryText;
   }
 
   updatedStack.addSpacer();
 
-  const updateImg = SFSymbol.named('arrow.clockwise').image;
+  const updateImg = SFSymbol.named('arrow.triangle.2.circlepath').image;
   const updateIcon = updatedStack.addImage(updateImg);
-  updateIcon.imageSize = new Size(9, 9);
-  updateIcon.tintColor = colors.textColor;
+  updateIcon.imageSize = new Size(11, 11);
+  updateIcon.tintColor = colors.secondaryText;
 
   updatedStack.addSpacer(2);
 
   const updated = new Date();
   const updateText = updatedStack.addText(`${updated.toLocaleTimeString()}`);
   updateText.font = Font.systemFont(9);
+  updateText.textColor = colors.secondaryText;
 
   return w;
 };

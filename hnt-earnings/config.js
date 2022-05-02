@@ -20,9 +20,11 @@ module.exports = {
 */
 
 const DARK_BG = '#1D1D1D';
-const DARK_TEXT = '#E3E3E3';
+const DARK_TEXT = '#FFFFFF';
+const DARK_TEXT_SECONDARY = '#797979';
 const LIGHT_BG = '#FFFFFF';
 const LIGHT_TEXT = '#000000';
+const LIGHT_TEXT_SECONDARY = '#999999';
 const LOGO_TINT = '#474DFF';
 
 module.exports.getColors = function () {
@@ -31,14 +33,17 @@ module.exports.getColors = function () {
   // Dark Mode
   const darkBackgroud = new Color(DARK_BG);
   const darkText = new Color(DARK_TEXT);
+  const secondaryDarkText = new Color(DARK_TEXT_SECONDARY);
 
   // Light Mode
   const lightBackgroud = new Color(LIGHT_BG);
   const lightText = new Color(LIGHT_TEXT);
+  const secondaryLightText = new Color(LIGHT_TEXT_SECONDARY);
 
   return {
     bgColor: Color.dynamic(lightBackgroud, darkBackgroud),
-    textColor: Color.dynamic(lightText, darkText),
+    text: Color.dynamic(lightText, darkText),
+    secondaryText: Color.dynamic(secondaryLightText, secondaryDarkText),
     tintColor: tintColor,
   };
 };
