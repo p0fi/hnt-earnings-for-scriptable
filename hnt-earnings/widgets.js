@@ -45,7 +45,7 @@ module.exports.small = async function (params) {
   heliumLogo.imageSize = new Size(30, 30);
   heliumLogo.tintColor = colors.tintColor;
 
-  headerStack.addSpacer(5);
+  headerStack.addSpacer();
 
   // Hotspot name
   const hsNameStack = headerStack.addStack();
