@@ -45,7 +45,7 @@ module.exports.small = async function (params) {
   heliumLogo.imageSize = new Size(30, 30);
   heliumLogo.tintColor = colors.tintColor;
 
-  headerStack.addSpacer(5);
+  headerStack.addSpacer();
 
   // Hotspot name
   const hsNameStack = headerStack.addStack();
@@ -129,9 +129,156 @@ module.exports.medium = async function (params) {
   if (params.name === '') {
     return this.missingParameter();
   }
+  
+  const rate = await api.getHeliumPrice();
+  const earnings = await api.getEarnings(rate, params.name, params.period);
+  const pocReceipts = await api.getRewardDetails(rate, params.name);
 
-  w.addText('to be implemented...');
+  const contentStack = w.addStack();
+  contentStack.layoutHorizontally();
 
+  // Helium logo
+  {
+    let img = await utils.getAsset('helium.png');
+    const heliumLogo = contentStack.addImage(img);
+    heliumLogo.imageSize = new Size(30, 30);
+    heliumLogo.tintColor = colors.tintColor;
+  }
+
+  contentStack.addSpacer(15);
+
+  // Activities
+  {
+    const activitiesStack = contentStack.addStack();
+    activitiesStack.layoutVertically();
+
+    activitiesStack.addSpacer(20);
+
+    const beaconHeader = activitiesStack.addText(i18n.t('last-beacon'));
+    beaconHeader.font = Font.boldSystemFont(9);
+    beaconHeader.textColor = colors.secondaryText;
+    const beaconInfo = activitiesStack.addStack();
+    beaconInfo.layoutHorizontally();
+    
+    
+    const beaconTime = beaconInfo.addText(utils.getRelativeTimeString(pocReceipts.lastBeacon.time));
+    beaconInfo.addSpacer(10);
+    const beaconReward = beaconInfo.addText(pocReceipts.lastBeacon.amount);
+    beaconTime.font = Font.systemFont(12);
+    beaconReward.font = Font.systemFont(12);
+
+    activitiesStack.addSpacer(5);
+
+    const witnessHeader = activitiesStack.addText(i18n.t('last-witness'));
+    witnessHeader.font = Font.boldSystemFont(9);
+    witnessHeader.textColor = colors.secondaryText;
+    const witnessInfo = activitiesStack.addStack();
+    witnessInfo.layoutHorizontally();
+    const witnessTime = witnessInfo.addText(utils.getRelativeTimeString(pocReceipts.lastWitness.time));
+    witnessInfo.addSpacer(10);
+    const witnessReward = witnessInfo.addText(pocReceipts.lastWitness.amount);
+    witnessReward.font = Font.systemFont(12);
+    witnessTime.font = Font.systemFont(12);
+
+    activitiesStack.addSpacer(5);
+
+    const challengeHeader = activitiesStack.addText(i18n.t('last-challenge'));
+    challengeHeader.font = Font.boldSystemFont(9);
+    challengeHeader.textColor = colors.secondaryText;
+    const challengeInfo = activitiesStack.addStack();
+    challengeInfo.layoutHorizontally();
+    const challengeTime = challengeInfo.addText(utils.getRelativeTimeString(pocReceipts.lastChallenge.time));
+    challengeInfo.addSpacer(10);
+    const challengeReward = challengeInfo.addText(pocReceipts.lastChallenge.amount);
+    challengeReward.font = Font.systemFont(12);
+    challengeTime.font = Font.systemFont(12);
+
+    activitiesStack.addSpacer();
+  }
+
+  contentStack.addSpacer();
+
+  // Earnings & Name
+  {
+    const earningsStack = contentStack.addStack();
+    earningsStack.layoutVertically();
+
+    // Hotspot name
+    {
+      const nameComponents = params.name.split('-').map((element) => utils.capitalizeFirstLetter(element));
+      
+      const nameStack1 = earningsStack.addStack();
+      nameStack1.layoutHorizontally();
+      const nameStack2 = earningsStack.addStack();
+      nameStack2.layoutHorizontally();
+
+      nameStack1.addSpacer();
+      const nameText = nameStack1.addText(`${nameComponents[0]} ${nameComponents[1]}`);
+      nameText.font = Font.systemFont(12);
+      nameText.textColor = colors.text;
+
+      nameStack2.addSpacer();
+
+      const mainNameText = nameStack2.addText(`${nameComponents[2]}`);
+      mainNameText.font = Font.boldSystemFont(20);
+      mainNameText.textColor = colors.text;
+    }
+
+    earningsStack.addSpacer();
+
+    const alignmentStack = earningsStack.addStack();
+    alignmentStack.layoutHorizontally();
+
+    alignmentStack.addSpacer();
+
+    const numberStack = alignmentStack.addStack();
+    numberStack.layoutVertically();
+
+    const periodText = numberStack.addText(i18n.t(params.period));
+    periodText.font = Font.boldSystemFont(12);
+    periodText.textColor = colors.secondaryText;
+    let earningsText = numberStack.addText(earnings);
+    earningsText.font = Font.boldSystemFont(32);
+    earningsText.textColor = colors.text;
+    earningsText.minimumScaleFactor = 0.5;
+
+    numberStack.addSpacer();
+    alignmentStack.addSpacer();
+
+    earningsStack.addSpacer();
+  }
+
+  contentStack.addSpacer();
+
+  w.addSpacer();
+
+  // Rate and updated text
+  {
+    const updatedStack = w.addStack();
+    updatedStack.layoutHorizontally();
+
+    const formattedRate = rate.toLocaleString(conf.LOCALE, { style: 'currency', currency: conf.CURRENCY });
+
+    if (conf.CURRENCY != 'HNT') {
+      const rateText = updatedStack.addText(`${formattedRate}/HNT`);
+      rateText.font = Font.systemFont(9);
+      rateText.textColor = colors.secondaryText;
+    }
+
+    updatedStack.addSpacer();
+
+    const updateImg = SFSymbol.named('arrow.triangle.2.circlepath').image;
+    const updateIcon = updatedStack.addImage(updateImg);
+    updateIcon.imageSize = new Size(11, 11);
+    updateIcon.tintColor = colors.secondaryText;
+
+    updatedStack.addSpacer(2);
+
+    const updated = new Date();
+    const updateText = updatedStack.addText(`${updated.toLocaleTimeString()}`);
+    updateText.font = Font.systemFont(9);
+    updateText.textColor = colors.secondaryText;
+  }
   return w;
 };
 

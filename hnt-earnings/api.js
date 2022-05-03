@@ -24,6 +24,8 @@ module.exports.getEarnings = async function (rate, name, period) {
   const resp = await req.loadJSON();
   const totalHNT = resp.data.total;
 
+  console.log(`rewards: ${totalHNT} HNT`);
+
   const locale = Device.locale().replace(/_/g, '-');
   const total = totalHNT * rate;
 
@@ -102,3 +104,55 @@ async function requestHeliumPriceFromAPI() {
   Keychain.set('helium_price', JSON.stringify(data));
   return true;
 }
+
+module.exports.getRewardDetails = async function (rate, name) {
+  const address = await getAddress(name);
+
+  const d = new Date();
+  const from = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 5).toISOString();
+
+  const req1 = new Request(`${HELIUM_API_BASE_URL}/v1/hotspots/${address}/rewards?min_time=${from}`);
+  const resp1 = await req1.loadJSON();
+  const cursor = resp1.cursor;
+
+  console.log('got cursor');
+
+  const req2 = new Request(`${HELIUM_API_BASE_URL}/v1/hotspots/${address}/rewards?cursor=${cursor}`);
+
+  const resp = await req2.loadJSON();
+  const data = resp.data;
+
+  lastWitness = data.find((obj) => obj.type === 'poc_witness');
+  lastChallenge = data.find((obj) => obj.type === 'poc_challenger');
+  lastBeacon = data.find((obj) => obj.type === 'poc_challengee');
+
+  lastBeaconMoney = ((lastBeacon.amount / 100000000) * rate).toLocaleString(config.LOCALE, {
+    style: 'currency',
+    currency: config.CURRENCY,
+  });
+
+  lastWitnessMoney = ((lastWitness.amount / 100000000) * rate).toLocaleString(config.LOCALE, {
+    style: 'currency',
+    currency: config.CURRENCY,
+  });
+
+  lastChallengeMoney = ((lastChallenge.amount / 100000000) * rate).toLocaleString(config.LOCALE, {
+    style: 'currency',
+    currency: config.CURRENCY,
+  });
+
+  return {
+    lastBeacon: {
+      time: lastBeacon.timestamp,
+      amount: lastBeaconMoney,
+    },
+    lastWitness: {
+      time: lastWitness.timestamp,
+      amount: lastWitnessMoney,
+    },
+    lastChallenge: {
+      time: lastChallenge.timestamp,
+      amount: lastChallengeMoney,
+    },
+  };
+};
