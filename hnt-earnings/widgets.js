@@ -129,6 +129,10 @@ module.exports.medium = async function (params) {
   if (params.name === '') {
     return this.missingParameter();
   }
+  
+  const rate = await api.getHeliumPrice();
+  const earnings = await api.getEarnings(rate, params.name, params.period);
+  const pocReceipts = await api.getRewardDetails(rate, params.name);
 
   const contentStack = w.addStack();
   contentStack.layoutHorizontally();
@@ -150,40 +154,42 @@ module.exports.medium = async function (params) {
 
     activitiesStack.addSpacer(20);
 
-    const beaconHeader = activitiesStack.addText('Last Beacon');
+    const beaconHeader = activitiesStack.addText(i18n.t('last-beacon'));
     beaconHeader.font = Font.boldSystemFont(9);
     beaconHeader.textColor = colors.secondaryText;
     const beaconInfo = activitiesStack.addStack();
     beaconInfo.layoutHorizontally();
-    const beaconTime = beaconInfo.addText('15 hours ago');
+    
+    
+    const beaconTime = beaconInfo.addText(utils.getRelativeTimeString(pocReceipts.lastBeacon.time));
     beaconInfo.addSpacer(10);
-    const beaconReward = beaconInfo.addText('0,84 €');
+    const beaconReward = beaconInfo.addText(pocReceipts.lastBeacon.amount);
     beaconTime.font = Font.systemFont(12);
     beaconReward.font = Font.systemFont(12);
 
     activitiesStack.addSpacer(5);
 
-    const witnessHeader = activitiesStack.addText('Last Witness');
+    const witnessHeader = activitiesStack.addText(i18n.t('last-witness'));
     witnessHeader.font = Font.boldSystemFont(9);
     witnessHeader.textColor = colors.secondaryText;
     const witnessInfo = activitiesStack.addStack();
     witnessInfo.layoutHorizontally();
-    const witnessTime = witnessInfo.addText('1 hour ago');
+    const witnessTime = witnessInfo.addText(utils.getRelativeTimeString(pocReceipts.lastWitness.time));
     witnessInfo.addSpacer(10);
-    const witnessReward = witnessInfo.addText('0,12 €');
+    const witnessReward = witnessInfo.addText(pocReceipts.lastWitness.amount);
     witnessReward.font = Font.systemFont(12);
     witnessTime.font = Font.systemFont(12);
 
     activitiesStack.addSpacer(5);
 
-    const challengeHeader = activitiesStack.addText('Last Challenge');
+    const challengeHeader = activitiesStack.addText(i18n.t('last-challenge'));
     challengeHeader.font = Font.boldSystemFont(9);
     challengeHeader.textColor = colors.secondaryText;
     const challengeInfo = activitiesStack.addStack();
     challengeInfo.layoutHorizontally();
-    const challengeTime = challengeInfo.addText('18 hours ago');
+    const challengeTime = challengeInfo.addText(utils.getRelativeTimeString(pocReceipts.lastChallenge.time));
     challengeInfo.addSpacer(10);
-    const challengeReward = challengeInfo.addText('0,42 €');
+    const challengeReward = challengeInfo.addText(pocReceipts.lastChallenge.amount);
     challengeReward.font = Font.systemFont(12);
     challengeTime.font = Font.systemFont(12);
 
@@ -199,19 +205,21 @@ module.exports.medium = async function (params) {
 
     // Hotspot name
     {
+      const nameComponents = params.name.split('-').map((element) => utils.capitalizeFirstLetter(element));
+      
       const nameStack1 = earningsStack.addStack();
       nameStack1.layoutHorizontally();
       const nameStack2 = earningsStack.addStack();
       nameStack2.layoutHorizontally();
 
       nameStack1.addSpacer();
-      const nameText = nameStack1.addText(`Your Hotspot`);
+      const nameText = nameStack1.addText(`${nameComponents[0]} ${nameComponents[1]}`);
       nameText.font = Font.systemFont(12);
       nameText.textColor = colors.text;
 
       nameStack2.addSpacer();
 
-      const mainNameText = nameStack2.addText(`Name`);
+      const mainNameText = nameStack2.addText(`${nameComponents[2]}`);
       mainNameText.font = Font.boldSystemFont(20);
       mainNameText.textColor = colors.text;
     }
@@ -226,10 +234,10 @@ module.exports.medium = async function (params) {
     const numberStack = alignmentStack.addStack();
     numberStack.layoutVertically();
 
-    const periodText = numberStack.addText(i18n.t(params.period, 'en-EN'));
+    const periodText = numberStack.addText(i18n.t(params.period));
     periodText.font = Font.boldSystemFont(12);
     periodText.textColor = colors.secondaryText;
-    let earningsText = numberStack.addText('4,20 €');
+    let earningsText = numberStack.addText(earnings);
     earningsText.font = Font.boldSystemFont(32);
     earningsText.textColor = colors.text;
     earningsText.minimumScaleFactor = 0.5;
@@ -248,8 +256,6 @@ module.exports.medium = async function (params) {
   {
     const updatedStack = w.addStack();
     updatedStack.layoutHorizontally();
-
-    const rate = 13;
 
     const formattedRate = rate.toLocaleString(conf.LOCALE, { style: 'currency', currency: conf.CURRENCY });
 

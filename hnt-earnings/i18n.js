@@ -12,6 +12,12 @@ module.exports.t = function (key, locale) {
           return 'Diese Woche';
         case 'month':
           return 'Dieser Monat';
+        case 'last-beacon':
+          return 'Letzter Beacon';
+        case 'last-witness':
+          return 'Letzter Witness';
+        case 'last-challenge':
+          return 'Letzte Challenge';
 
         default:
           return 'key not found';
@@ -25,6 +31,12 @@ module.exports.t = function (key, locale) {
           return 'Esta semana';
         case 'month':
           return 'Este mes';
+        case 'last-beacon':
+          return 'Último Beacon';
+        case 'last-witness':
+          return 'Último testigo';
+        case 'last-challenge':
+          return 'Último desafío';
 
         default:
           return 'key not found';
@@ -39,6 +51,12 @@ module.exports.t = function (key, locale) {
           return 'This Week';
         case 'month':
           return 'This Month';
+        case 'last-beacon':
+          return 'Last Beacon';
+        case 'last-witness':
+          return 'Last Witness';
+        case 'last-challenge':
+          return 'Last Challenge';
 
         default:
           return 'key not found';
