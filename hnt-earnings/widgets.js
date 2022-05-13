@@ -1,7 +1,7 @@
-const api = importModule('api');
 const utils = importModule('utils');
 const conf = importModule('config');
 const i18n = importModule('i18n');
+const api = importModule('api');
 
 const colors = conf.getColors();
 
@@ -33,8 +33,7 @@ module.exports.small = async function (params) {
     return this.missingParameter();
   }
 
-  const rate = await api.getHeliumPrice();
-  const earningsToday = await api.getEarnings(rate, params.name, params.period);
+  const earnings = await api.getEarnings(params.name, params.period);
 
   const headerStack = w.addStack();
   headerStack.layoutHorizontally();
@@ -82,7 +81,7 @@ module.exports.small = async function (params) {
   const periodText = numberStack.addText(i18n.t(params.period));
   periodText.font = Font.boldSystemFont(12);
   periodText.textColor = colors.secondaryText;
-  let earningsText = numberStack.addText(earningsToday);
+  let earningsText = numberStack.addText(await utils.convertToCurrencyString(earnings.rewards, conf.CURRENCY));
   earningsText.font = Font.boldSystemFont(32);
   earningsText.textColor = colors.text;
   earningsText.minimumScaleFactor = 0.5;
@@ -95,6 +94,7 @@ module.exports.small = async function (params) {
   const updatedStack = w.addStack();
   updatedStack.layoutHorizontally();
 
+  const rate = await api.getHeliumPrice();
   const formattedRate = rate.toLocaleString(conf.LOCALE, { style: 'currency', currency: conf.CURRENCY });
 
   if (conf.CURRENCY != 'HNT') {
@@ -105,7 +105,8 @@ module.exports.small = async function (params) {
 
   updatedStack.addSpacer();
 
-  const updateImg = SFSymbol.named('arrow.triangle.2.circlepath').image;
+  const imageName = earnings.cached === false ? 'arrow.triangle.2.circlepath' : 'bolt.horizontal.circle';
+  const updateImg = SFSymbol.named(imageName).image;
   const updateIcon = updatedStack.addImage(updateImg);
   updateIcon.imageSize = new Size(11, 11);
   updateIcon.tintColor = colors.secondaryText;
@@ -129,9 +130,9 @@ module.exports.medium = async function (params) {
   if (params.name === '') {
     return this.missingParameter();
   }
-  
+
   const rate = await api.getHeliumPrice();
-  const earnings = await api.getEarnings(rate, params.name, params.period);
+  const earnings = await api.getEarnings(params.name, params.period);
   const pocReceipts = await api.getRewardDetails(rate, params.name);
 
   const contentStack = w.addStack();
@@ -159,11 +160,12 @@ module.exports.medium = async function (params) {
     beaconHeader.textColor = colors.secondaryText;
     const beaconInfo = activitiesStack.addStack();
     beaconInfo.layoutHorizontally();
-    
-    
-    const beaconTime = beaconInfo.addText(utils.getRelativeTimeString(pocReceipts.lastBeacon.time));
+
+    const beaconTime = beaconInfo.addText(utils.getRelativeTimeString(pocReceipts.beacon.timestamp));
     beaconInfo.addSpacer(10);
-    const beaconReward = beaconInfo.addText(pocReceipts.lastBeacon.amount);
+    const beaconReward = beaconInfo.addText(
+      await utils.convertToCurrencyString(pocReceipts.beacon.reward, conf.CURRENCY)
+    );
     beaconTime.font = Font.systemFont(12);
     beaconReward.font = Font.systemFont(12);
 
@@ -174,9 +176,11 @@ module.exports.medium = async function (params) {
     witnessHeader.textColor = colors.secondaryText;
     const witnessInfo = activitiesStack.addStack();
     witnessInfo.layoutHorizontally();
-    const witnessTime = witnessInfo.addText(utils.getRelativeTimeString(pocReceipts.lastWitness.time));
+    const witnessTime = witnessInfo.addText(utils.getRelativeTimeString(pocReceipts.witness.timestamp));
     witnessInfo.addSpacer(10);
-    const witnessReward = witnessInfo.addText(pocReceipts.lastWitness.amount);
+    const witnessReward = witnessInfo.addText(
+      await utils.convertToCurrencyString(pocReceipts.witness.reward, conf.CURRENCY)
+    );
     witnessReward.font = Font.systemFont(12);
     witnessTime.font = Font.systemFont(12);
 
@@ -187,9 +191,11 @@ module.exports.medium = async function (params) {
     challengeHeader.textColor = colors.secondaryText;
     const challengeInfo = activitiesStack.addStack();
     challengeInfo.layoutHorizontally();
-    const challengeTime = challengeInfo.addText(utils.getRelativeTimeString(pocReceipts.lastChallenge.time));
+    const challengeTime = challengeInfo.addText(utils.getRelativeTimeString(pocReceipts.challenge.timestamp));
     challengeInfo.addSpacer(10);
-    const challengeReward = challengeInfo.addText(pocReceipts.lastChallenge.amount);
+    const challengeReward = challengeInfo.addText(
+      await utils.convertToCurrencyString(pocReceipts.challenge.reward, conf.CURRENCY)
+    );
     challengeReward.font = Font.systemFont(12);
     challengeTime.font = Font.systemFont(12);
 
@@ -206,7 +212,7 @@ module.exports.medium = async function (params) {
     // Hotspot name
     {
       const nameComponents = params.name.split('-').map((element) => utils.capitalizeFirstLetter(element));
-      
+
       const nameStack1 = earningsStack.addStack();
       nameStack1.layoutHorizontally();
       const nameStack2 = earningsStack.addStack();
@@ -237,7 +243,7 @@ module.exports.medium = async function (params) {
     const periodText = numberStack.addText(i18n.t(params.period));
     periodText.font = Font.boldSystemFont(12);
     periodText.textColor = colors.secondaryText;
-    let earningsText = numberStack.addText(earnings);
+    let earningsText = numberStack.addText(await utils.convertToCurrencyString(earnings.rewards, conf.CURRENCY));
     earningsText.font = Font.boldSystemFont(32);
     earningsText.textColor = colors.text;
     earningsText.minimumScaleFactor = 0.5;
@@ -267,7 +273,10 @@ module.exports.medium = async function (params) {
 
     updatedStack.addSpacer();
 
-    const updateImg = SFSymbol.named('arrow.triangle.2.circlepath').image;
+    const showingCachedData = pocReceipts.cached || earnings.cached;
+    const imageName = showingCachedData === false ? 'arrow.triangle.2.circlepath' : 'bolt.horizontal.circle';
+
+    const updateImg = SFSymbol.named(imageName).image;
     const updateIcon = updatedStack.addImage(updateImg);
     updateIcon.imageSize = new Size(11, 11);
     updateIcon.tintColor = colors.secondaryText;

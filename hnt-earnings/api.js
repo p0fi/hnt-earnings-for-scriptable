@@ -1,8 +1,9 @@
-const config = importModule('hnt-earnings/config');
+const config = importModule('config');
+const cache = importModule('cache');
 
 const HELIUM_API_BASE_URL = 'https://api.helium.io';
 
-module.exports.getEarnings = async function (rate, name, period) {
+module.exports.getEarnings = async function (name, period) {
   const address = await getAddress(name);
 
   const d = new Date();
@@ -20,88 +21,101 @@ module.exports.getEarnings = async function (rate, name, period) {
     default:
       from = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
   }
+  console.log('📡 fetching total rewards...');
   const req = new Request(`${HELIUM_API_BASE_URL}/v1/hotspots/${address}/rewards/sum?min_time=${from}`);
-  const resp = await req.loadJSON();
-  const totalHNT = resp.data.total;
+  req.timeoutInterval = 10;
 
-  console.log(`rewards: ${totalHNT} HNT`);
+  try {
+    const resp = await req.loadJSON();
+    const totalHNT = resp.data.total;
 
-  const locale = Device.locale().replace(/_/g, '-');
-  const total = totalHNT * rate;
+    //Add rewards to cache
+    let data = await cache.load(name);
+    data = { ...data, rewards: { ...data.rewards, [period]: totalHNT } };
+    await cache.save(name, data);
 
-  return total.toLocaleString(locale, {
-    style: 'currency',
-    currency: config.CURRENCY,
-  });
+    return { rewards: totalHNT, cached: false };
+  } catch {
+    // Sucker Helium API seems not working, use old value from cache
+    console.log('api call failed, using cached value...');
+    let data = await cache.load(name);
+    // Potential Problem: API Call fails and there is no cache
+    return { rewards: data.rewards[period], cached: true };
+  }
 };
 
 async function getAddress(name) {
-  // Check if the address is in the keychain return that if so
+  // Check if a chache file exists for this hotspot
   console.log(`getting address for ${name}`);
 
-  // Check keychain for price data
-  console.log(`checking keychain...`);
-  if (!Keychain.contains(`address_${name}`)) {
-    console.log('no address found in keychain...');
+  // Check cache for hotspot data
+  const data = await cache.load(name);
+  if (!data) {
+    console.log('no cache found...');
     // Get address from helium API
     if (!(await fetchAddress(name))) return;
     return getAddress(name);
   }
-  const address = Keychain.get(`address_${name}`);
-  console.log(`found address ${address} for ${name}`);
-  return address;
+  console.log(`💾 using cached address`);
+  return data.address;
 }
 
 async function fetchAddress(name) {
-  console.log(`fetching hotspot address for ${name}...`);
+  console.log(`📡 fetching hotspot address for ${name}...`);
   const req = new Request(`${HELIUM_API_BASE_URL}/v1/hotspots/name/${name}`);
   const resp = await req.loadJSON();
   const address = resp.data[0].address;
 
-  Keychain.set(`address_${name}`, address);
+  let data = await cache.load(name);
+  if (!data) {
+    console.log(`creating cache file for ${name}...`);
+    data = { address: address };
+  } else {
+    data = { ...data, address: address };
+  }
+
+  await cache.save(name, data);
+
   console.log(`saved ${address} for ${name}`);
   return true;
 }
 
 module.exports.getHeliumPrice = async function () {
   if (config.CURRENCY == 'HNT') return 1;
-  console.log('getting current helium price...');
+  console.log('getting helium price...');
 
-  // Check keychain for price data
-  console.log('checking cached value in keychain...');
-  if (!Keychain.contains('helium_price')) {
-    console.log('no data found in keychain...');
+  // Check cache for price data
+  const data = await cache.load('price');
+  if (!data || !data.hasOwnProperty(config.CURRENCY)) {
+    console.log('no cache found...');
     // Request helium price from API
     if (!(await requestHeliumPriceFromAPI())) return;
     return this.getHeliumPrice();
   }
 
-  console.log('checking if its still valid...');
-  const data = JSON.parse(Keychain.get('helium_price'));
-  if (data.currency != config.CURRENCY || Math.floor(Date.now() / 1000) >= data.updatedAt + 14400) {
-    console.log('existing data is older than 4h...');
+  if (Math.floor(Date.now() / 1000) >= data[config.CURRENCY].updated + 14400) {
+    console.log('cache data is older than 4h...');
     // Request helium price from API
     if (!(await requestHeliumPriceFromAPI())) return;
     return this.getHeliumPrice();
   }
 
-  console.log(`using cached price: ${data.price}`);
-  return data.price;
+  console.log(`💾 cached price: ${data[config.CURRENCY].rate}`);
+  return data[config.CURRENCY].rate;
 };
 
 async function requestHeliumPriceFromAPI() {
-  console.log('requesting current helium price form coingecko...');
+  console.log('📡 fetching current helium price form coingecko...');
   const req = new Request(`https://api.coingecko.com/api/v3/simple/price?ids=helium&vs_currencies=${config.CURRENCY}`);
   const resp = await req.loadJSON();
   const currentPrice = resp.helium[config.CURRENCY.toLowerCase()];
 
-  const data = {
-    price: currentPrice,
-    updatedAt: Math.floor(Date.now() / 1000),
-    currency: config.CURRENCY,
-  };
+  const obj = { rate: currentPrice, updated: Math.floor(Date.now() / 1000) };
 
-  Keychain.set('helium_price', JSON.stringify(data));
+  let data = await cache.load('price');
+  data = { ...data, [config.CURRENCY]: obj };
+
+  await cache.save('price', data, false);
   return true;
 }
 
@@ -109,50 +123,52 @@ module.exports.getRewardDetails = async function (rate, name) {
   const address = await getAddress(name);
 
   const d = new Date();
-  const from = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 5).toISOString();
-
+  const from = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 4).toISOString();
+  console.log('📡 fetching cursor...');
   const req1 = new Request(`${HELIUM_API_BASE_URL}/v1/hotspots/${address}/rewards?min_time=${from}`);
-  const resp1 = await req1.loadJSON();
-  const cursor = resp1.cursor;
 
-  console.log('got cursor');
+  try {
+    const resp1 = await req1.loadJSON();
+    const cursor = resp1.cursor;
 
-  const req2 = new Request(`${HELIUM_API_BASE_URL}/v1/hotspots/${address}/rewards?cursor=${cursor}`);
+    let test = await cache.load('cursors');
+    const entry = { ...test, [Math.floor(Date.now() / 1000)]: cursor };
+    await cache.save('cursors', entry);
 
-  const resp = await req2.loadJSON();
-  const data = resp.data;
+    console.log('📡 fetching reward details...');
+    const req2 = new Request(`${HELIUM_API_BASE_URL}/v1/hotspots/${address}/rewards?cursor=${cursor}`);
 
-  lastWitness = data.find((obj) => obj.type === 'poc_witness');
-  lastChallenge = data.find((obj) => obj.type === 'poc_challenger');
-  lastBeacon = data.find((obj) => obj.type === 'poc_challengee');
+    const resp = await req2.loadJSON();
+    const data = resp.data;
 
-  lastBeaconMoney = ((lastBeacon.amount / 100000000) * rate).toLocaleString(config.LOCALE, {
-    style: 'currency',
-    currency: config.CURRENCY,
-  });
+    lastWitness = data.find((obj) => obj.type === 'poc_witness');
+    lastChallenge = data.find((obj) => obj.type === 'poc_challenger');
+    lastBeacon = data.find((obj) => obj.type === 'poc_challengee');
 
-  lastWitnessMoney = ((lastWitness.amount / 100000000) * rate).toLocaleString(config.LOCALE, {
-    style: 'currency',
-    currency: config.CURRENCY,
-  });
+    const activities = {
+      beacon: {
+        timestamp: new Date(lastBeacon.timestamp).getTime() / 1000,
+        reward: lastBeacon.amount / 100000000,
+      },
+      witness: {
+        timestamp: new Date(lastWitness.timestamp).getTime() / 1000,
+        reward: lastWitness.amount / 100000000,
+      },
+      challenge: {
+        timestamp: new Date(lastChallenge.timestamp).getTime() / 1000,
+        reward: lastChallenge.amount / 100000000,
+      },
+    };
 
-  lastChallengeMoney = ((lastChallenge.amount / 100000000) * rate).toLocaleString(config.LOCALE, {
-    style: 'currency',
-    currency: config.CURRENCY,
-  });
+    let data2 = await cache.load(name);
+    data2 = { ...data2, activities: activities };
+    await cache.save(name, data2);
 
-  return {
-    lastBeacon: {
-      time: lastBeacon.timestamp,
-      amount: lastBeaconMoney,
-    },
-    lastWitness: {
-      time: lastWitness.timestamp,
-      amount: lastWitnessMoney,
-    },
-    lastChallenge: {
-      time: lastChallenge.timestamp,
-      amount: lastChallengeMoney,
-    },
-  };
+    return activities;
+  } catch {
+    console.log('api call failed, using cached value...');
+    let data = await cache.load(name);
+    // Potential Problem: API Call fails and there is no cache
+    return { ...data.activities, cached: true };
+  }
 };
