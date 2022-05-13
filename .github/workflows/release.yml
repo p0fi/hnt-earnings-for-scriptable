@@ -12,7 +12,7 @@ jobs:
         uses: thedoctor0/zip-release@master
         with:
           filename: 'hnt-earnings-${{github.ref_name}}.zip'
-          exclusions: '*.git* LICENSE README.md'
+          exclusions: '*.git* LICENSE README.md .gitkeep'
       - name: Upload Release
         uses: ncipollo/release-action@v1
         with:

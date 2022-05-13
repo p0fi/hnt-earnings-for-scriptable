@@ -1,17 +1,25 @@
+const api = importModule('api');
+const config = importModule('config');
+
 module.exports.capitalizeFirstLetter = function (string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
-module.exports.getRelativeTimeString = function (time, locale) {
+module.exports.convertToCurrencyString = async function (amount, currency) {
+  const rate = await api.getHeliumPrice(currency);
+  const result = amount * rate;
+  return result.toLocaleString(config.LOCALE, { style: 'currency', currency: config.CURRENCY });
+};
+
+module.exports.getRelativeTimeString = function (then, locale) {
   // If no locale is specified use device settings
   if (locale === undefined) {
     locale = Device.locale().replace(/_/g, '-');
   }
   const formatter = new Intl.RelativeTimeFormat(locale, { style: `narrow` });
 
-  const thenSec = new Date(time).getTime() / 1000;
-  const nowSec = Math.floor(Date.now() / 1000);
-  const diff = thenSec - nowSec;
+  const now = Math.floor(Date.now() / 1000);
+  const diff = then - now;
 
   if (Math.abs(diff) < 60) {
     return formatter.format(diff, 'seconds');
